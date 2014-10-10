@@ -22,6 +22,8 @@ class NormController:
     PATH = os.getcwd()
     #PATH = "E:/Scriptie/ritsscenario"
     CASENAME="hello"
+    SWITCH_TIME = 0
+    
     
     def handleNormal(self):
         vehicleList = traci.areal.getLastStepVehicleIdList("N42lane0")
@@ -49,17 +51,25 @@ class NormController:
             
     def handleSwitchPriority(self):
         print "handleSwitchPriority"
-        self.returnToNormal()
+        if self.state == "switchPriority":
+            if SWITCH_TIME == 10:
+                self.returnToNormal()
+        SWITCH_TIME += 1
+        self.stoppedVehicleList = traci.areal.getLastStepVehicleIdList("A28_350_lane0_0")
+        for self.vehicleID in self.stppedVehicleList:
+            traci.vehicle.setSpeed(self.vehicleID,0)
     
     def returnToNormal(self):
         self.state = "normal"
         self.vehicleWaitingTime = 0.0
         self.waitingVehicleID = None
+
     
     switch = {"normal" : handleNormal,
                 "sensorTriggered" : handleSensorTriggered,
                 "switchPriority" : handleSwitchPriority,
     }
+    
     state = "normal"
 
     def __init__(self, options):
