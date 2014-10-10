@@ -22,6 +22,29 @@ class NormController:
     PATH = os.getcwd()
     #PATH = "E:/Scriptie/ritsscenario"
     CASENAME="hello"
+    
+    def handleNormal(self):
+        vehicleList = traci.areal.getLastStepVehicleIdList("N42lane0")
+        if len(vehicleList) > 0:
+            state = "sensorTriggered"
+            self.vehicleList = vehicleList
+            self.vehicleListTimes = {}
+            for vehicleId in self.vehicleList:
+                self.vehicleListTimes[vehicleId] = 0
+    
+        print "handleNormal"
+    
+    def handleSensorTriggered(self):
+        print "handleSensorTriggered"
+        
+    def handleSwitchPriority(self):
+        print "handleSwitchPriority"
+    
+    switch = {"normal" : handleNormal,
+                "sensorTriggered" : handleSensorTriggered,
+                "switchPriority" : handleSwitchPriority,
+    }
+    state = "normal"
     def __init__(self, options):
              # this script has been called from the command line. It will start sumo as a
         # server, then connect and run
@@ -35,18 +58,21 @@ class NormController:
         print "Opening a port at", self.PORT
         traci.init(self.PORT)
         print "Connection made with sumo"
-        
+        self.laneAreaList = traci.areal.getIDList()
+   
+    
     def run(self):
         print "starting simulation"
         step = 0
         while step < 1:
             traci.simulationStep()
+            self.switch[self.state](self)
             """
             Als de invoegstrook meer dan 5 auto's wachtend heeft: voorrang
             Als voorste auto op invoegstrook langer dan 1 minuut wacht: voorrang
             
             
-            """
+          
             
             
             laneAreaList=traci.areal.getIDList()
@@ -63,18 +89,19 @@ class NormController:
                 print "+ getLastStepVehicleIdList\t", traci.areal.getLastStepVehicleIdList(laneAreaID),"\t+"
                 
                 vehicleList = traci.areal.getLastStepVehicleIdList(laneAreaID)
-                """"if laneAreaID == "N42lane0":
+                if laneAreaID == "N42lane0":
                     for vehicleID in vehicleList:                  
                         print "+ getDrivingDistance nextsensor(",vehicleID,") ", traci.vehicle.getDrivingDistance(vehicleID,"A28Tot700",getSensorPos("A28lane0.1"),0)
                 elif laneAreaID == "A28lane1.0":
                     for vehicleID in vehicleList:                  
                         print "+ getDrivingDistance nextsensor(",vehicleID,") ", traci.vehicle.getDrivingDistance(vehicleID,"A28Tot700",20,0)
-                """
+                
                 print "---------------------------------------"
-            print "+---------------------------------------+"
+            print "+---------------------------------------+"\
+              """
             step += 1
         traci.close()
-
+    
     def getSensorPos(self,name):
         tree = ET.parse(self.PATH+"/sensors.xml")
         root = tree.getroot()
