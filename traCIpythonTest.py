@@ -2,10 +2,10 @@ import os
 import sys
 import optparse
 import subprocess
+
 if 'SUMO_HOME' in os.environ:
     tools = os.path.join(os.environ['SUMO_HOME'], 'tools')
     sys.path.append(tools)
-      
 else:   
     sys.exit("please declare environment variable 'SUMO_HOME'")
   
@@ -17,8 +17,8 @@ DEVNULL = open(os.devnull, 'wb')
 PORT = 8813
 # Use this if this file is in the same directory as the sumo files, enter the correct path to the sumo files otherwise.
 PATH = os.getcwd()
-#PATH = "E:/Scriptie/ritsscenario"
 CASENAME="hello"
+
 def init(): 
     print "Opening a port at", PORT
     traci.init(PORT)
@@ -28,10 +28,11 @@ def run():
     print "starting simulation"
     step = 0
     read_XML()
-    while step < 10:
+    """
+    while step < 10000:
         traci.simulationStep()
         laneAreaList=traci.areal.getIDList()
-        """print
+        print
         print "+---------------------------------------+"
         print "Current Step:", step
         for laneAreaID in laneAreaList:
@@ -41,32 +42,22 @@ def run():
             print "+ getLastStepMeanSpeed\t", traci.areal.getLastStepMeanSpeed(laneAreaID),"\t+"
             print "+ getLastStepOccupancy\t", traci.areal.getLastStepOccupancy(laneAreaID),"\t+"
             print "+ getLastStepVehicleIdList\t", traci.areal.getLastStepVehicleIdList(laneAreaID),"\t+"
-            vehicleList = traci.areal.getLastStepVehicleIdList(laneAreaID)
-            if laneAreaID == "N42lane0":
-                for vehicleID in vehicleList:                  
-                    print "+ getDrivingDistance nextsensor(",vehicleID,") ", traci.vehicle.getDrivingDistance(vehicleID,"A28Tot700",20,0)
-            elif laneAreaID == "A28lane1.0":
-                for vehicleID in vehicleList:                  
-                    print "+ getDrivingDistance nextsensor(",vehicleID,") ", traci.vehicle.getDrivingDistance(vehicleID,"A28Tot700",20,1)
-            
             print "---------------------------------------"
         print "+---------------------------------------+"
-        """
         step += 1
+    """   
     traci.close()
 
 def read_XML():
     import xml.etree.ElementTree as ET
-    tree = ET.parse(PATH+"/sensors.xml")
+    tree = ET.parse('sensors.xml')
     root = tree.getroot()
+    print root.tag
     for child in root:
-		print child.get("pos")
-    """for child in root:
 		print child.tag
 		if child.tag == "laneAreaDetector":
-			print child.attrib"""
-
-
+			print child.attrib
+   
 def get_options():
     optParser = optparse.OptionParser()
     optParser.add_option("--gui", action="store_true", default=False, help="run the commandline version of sumo")
