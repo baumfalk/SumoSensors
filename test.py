@@ -22,16 +22,19 @@ class NormController:
     PATH = os.getcwd()
     #PATH = "E:/Scriptie/ritsscenario"
     CASENAME="hello"
+    SWITCH_TIME = 0
+    
     
     def handleNormal(self):
         vehicleList = traci.areal.getLastStepVehicleIdList("N42lane0")
-        if len(vehicleList) > 0:
-            state = "sensorTriggered"
+        if len(vehicleList) > 5:
+                self.state = "switchPriority"
+        elif len(vehicleList) > 0:            
+            self.state = "sensorTriggered"
             self.vehicleList = vehicleList
             self.vehicleListTimes = {}
             for vehicleId in self.vehicleList:
                 self.vehicleListTimes[vehicleId] = 0
-    
         print "handleNormal"
     
     def handleSensorTriggered(self):
@@ -39,12 +42,23 @@ class NormController:
         
     def handleSwitchPriority(self):
         print "handleSwitchPriority"
+        if self.state == "switchPriority":
+            if SWITCH_TIME == 10:
+                self.returnToNormal()
+        SWITCH_TIME += 1
+           
+        self.stoppedVehicleList = traci.areal.getLastStepVehicleIdList("A28_350_lane0_0")
+        for self.vehicleID in self.stppedVehicleList:
+            traci.vehicle.setSpeed(self.vehicleID,0)
+        
     
     switch = {"normal" : handleNormal,
                 "sensorTriggered" : handleSensorTriggered,
                 "switchPriority" : handleSwitchPriority,
     }
+    
     state = "normal"
+    
     def __init__(self, options):
              # this script has been called from the command line. It will start sumo as a
         # server, then connect and run
@@ -64,7 +78,7 @@ class NormController:
     def run(self):
         print "starting simulation"
         step = 0
-        while step < 1:
+        while step < 1000:
             traci.simulationStep()
             self.switch[self.state](self)
             """
