@@ -25,26 +25,43 @@ class NormController:
     
     def handleNormal(self):
         vehicleList = traci.areal.getLastStepVehicleIdList("N42lane0")
-        if len(vehicleList) > 0:
-            state = "sensorTriggered"
-            self.vehicleList = vehicleList
-            self.vehicleListTimes = {}
-            for vehicleId in self.vehicleList:
-                self.vehicleListTimes[vehicleId] = 0
-    
+        
+        # 2 interesting cases:
+        # 1. there are five or more cars waiting on the sensor -> switch priority
+        # 2. there are four or less cars, but at least one waiting on the sensor -> sensor triggered
+        if len(vehicleList) >= 5:
+            self.state = "switchPriority"
+        elif len(vehicleList) > 0:
+            self.state = "sensorTriggered"
+            self.vehicleWaitingTime = 0.0
+            self.waitingVehicleID = vehicleList[0]
         print "handleNormal"
     
     def handleSensorTriggered(self):
         print "handleSensorTriggered"
-        
+        vehicleList = traci.areal.getLastStepVehicleIdList("N42lane0")
+        if self.waitingVehicleID == vehicleList[0]:
+            self.vehicleWaitingTime += traci.simulation.getDeltaT()
+            if self.vehicleWaitingTime >= 60:
+                self.state = "switchPriority"
+        else:        
+            self.returnToNormal()
+            
     def handleSwitchPriority(self):
         print "handleSwitchPriority"
+        self.returnToNormal()
+    
+    def returnToNormal(self):
+        self.state = "normal"
+        self.vehicleWaitingTime = 0.0
+        self.waitingVehicleID = None
     
     switch = {"normal" : handleNormal,
                 "sensorTriggered" : handleSensorTriggered,
                 "switchPriority" : handleSwitchPriority,
     }
     state = "normal"
+
     def __init__(self, options):
              # this script has been called from the command line. It will start sumo as a
         # server, then connect and run
@@ -52,6 +69,8 @@ class NormController:
             sumoBinary = checkBinary('sumo-gui')
         else:
             sumoBinary = checkBinary('sumo')
+             
+        self.rounds = 1000
         self.sumoProcess = subprocess.Popen([sumoBinary, "-n", self.PATH+"/"+self.CASENAME+".net.xml",'-r',self.PATH+"/"+self.CASENAME+".rou.xml",'-a',self.PATH+"/sensors.xml", "--remote-port", str(self.PORT)], stdout=DEVNULL#stdout=sys.stdout,
         ,stderr=sys.stderr)
     
@@ -62,9 +81,9 @@ class NormController:
    
     
     def run(self):
-        print "starting simulation"
+        print "starting simulation for",self.rounds,"rounds"
         step = 0
-        while step < 1:
+        while step < self.rounds:
             traci.simulationStep()
             self.switch[self.state](self)
             """
@@ -114,7 +133,7 @@ class NormController:
         
 def get_options():
     optParser = optparse.OptionParser()
-    optParser.add_option("--gui", action="store_true", default=False, help="run the commandline version of sumo")
+    optParser.add_option("--gui", action="store_true",  default=False, help="run the gui version of sumo")
     options, args = optParser.parse_args()
     return options
         
