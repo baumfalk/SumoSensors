@@ -13,75 +13,89 @@ from sumolib import checkBinary
 from subprocess import Popen, PIPE, STDOUT
 import traci
 import os
+import xml.etree.ElementTree as ET
 DEVNULL = open(os.devnull, 'wb')
-PORT = 8813
-# Use this if this file is in the same directory as the sumo files, enter the correct path to the sumo files otherwise.
-PATH = os.getcwd()
-#PATH = "E:/Scriptie/ritsscenario"
-CASENAME="hello"
-def init(): 
-    print "Opening a port at", PORT
-    traci.init(PORT)
-    print "Connection made with sumo"
+
+class NormController:   
+    PORT = 8813
+    # Use this if this file is in the same directory as the sumo files, enter the correct path to the sumo files otherwise.
+    PATH = os.getcwd()
+    #PATH = "E:/Scriptie/ritsscenario"
+    CASENAME="hello"
+    def __init__(self, options):
+             # this script has been called from the command line. It will start sumo as a
+        # server, then connect and run
+        if options.gui:
+            sumoBinary = checkBinary('sumo-gui')
+        else:
+            sumoBinary = checkBinary('sumo')
+        self.sumoProcess = subprocess.Popen([sumoBinary, "-n", self.PATH+"/"+self.CASENAME+".net.xml",'-r',self.PATH+"/"+self.CASENAME+".rou.xml",'-a',self.PATH+"/sensors.xml", "--remote-port", str(self.PORT)], stdout=DEVNULL#stdout=sys.stdout,
+        ,stderr=sys.stderr)
     
-def run():
-    print "starting simulation"
-    step = 0
-    while step < 1000:
-        traci.simulationStep()
-        laneAreaList=traci.areal.getIDList()
-        print
-        print "+---------------------------------------+"
-        print "Current Step:", step
-        for laneAreaID in laneAreaList:
-            print laneAreaID
-            print "+ getJamLengthMeters\t", traci.areal.getJamLengthMeters(laneAreaID),"\t+"
-            print "+ getJamLengthVehicle\t", traci.areal.getJamLengthVehicle(laneAreaID),"\t+"
-            print "+ getLastStepMeanSpeed\t", traci.areal.getLastStepMeanSpeed(laneAreaID),"\t+"
-            print "+ getLastStepOccupancy\t", traci.areal.getLastStepOccupancy(laneAreaID),"\t+"
-            print "+ getLastStepVehicleIdList\t", traci.areal.getLastStepVehicleIdList(laneAreaID),"\t+"
+        print "Opening a port at", self.PORT
+        traci.init(self.PORT)
+        print "Connection made with sumo"
+        
+    def run(self):
+        print "starting simulation"
+        step = 0
+        while step < 1:
+            traci.simulationStep()
+            """
+            Als de invoegstrook meer dan 5 auto's wachtend heeft: voorrang
+            Als voorste auto op invoegstrook langer dan 1 minuut wacht: voorrang
             
-            vehicleList = traci.areal.getLastStepVehicleIdList(laneAreaID)
-            if laneAreaID == "N42lane0":
-                for vehicleID in vehicleList:                  
-                    print "+ getDrivingDistance nextsensor(",vehicleID,") ", traci.vehicle.getDrivingDistance(vehicleID,"A28Tot700",getSensorPos(N42lane0),0)
-            elif laneAreaID == "A28lane1.0":
-                for vehicleID in vehicleList:                  
-                    print "+ getDrivingDistance nextsensor(",vehicleID,") ", traci.vehicle.getDrivingDistance(vehicleID,"A28Tot700",20,0)
             
-            print "---------------------------------------"
-        print "+---------------------------------------+"
-        step += 1
-    traci.close()
+            """
+            
+            
+            laneAreaList=traci.areal.getIDList()
+            print
+            print "+---------------------------------------+"
+            print "Current Step:", step
+            for laneAreaID in laneAreaList:
+                print "Position of sensor:",self.getSensorPos(laneAreaID)
+                print laneAreaID
+                print "+ getJamLengthMeters\t", traci.areal.getJamLengthMeters(laneAreaID),"\t+"
+                print "+ getJamLengthVehicle\t", traci.areal.getJamLengthVehicle(laneAreaID),"\t+"
+                print "+ getLastStepMeanSpeed\t", traci.areal.getLastStepMeanSpeed(laneAreaID),"\t+"
+                print "+ getLastStepOccupancy\t", traci.areal.getLastStepOccupancy(laneAreaID),"\t+"
+                print "+ getLastStepVehicleIdList\t", traci.areal.getLastStepVehicleIdList(laneAreaID),"\t+"
+                
+                vehicleList = traci.areal.getLastStepVehicleIdList(laneAreaID)
+                """"if laneAreaID == "N42lane0":
+                    for vehicleID in vehicleList:                  
+                        print "+ getDrivingDistance nextsensor(",vehicleID,") ", traci.vehicle.getDrivingDistance(vehicleID,"A28Tot700",getSensorPos("A28lane0.1"),0)
+                elif laneAreaID == "A28lane1.0":
+                    for vehicleID in vehicleList:                  
+                        print "+ getDrivingDistance nextsensor(",vehicleID,") ", traci.vehicle.getDrivingDistance(vehicleID,"A28Tot700",20,0)
+                """
+                print "---------------------------------------"
+            print "+---------------------------------------+"
+            step += 1
+        traci.close()
 
-def getSensorPos(name):
-    import xml.etree.ElementTree as ET
-    tree = ET.parse(PATH+"/sensors.xml")
-    root = tree.getroot()
-    for child in root:
-		if child.get("id") == name: 
-			return child.get("pos")
+    def getSensorPos(self,name):
+        tree = ET.parse(self.PATH+"/sensors.xml")
+        root = tree.getroot()
+        for child in root:
+            if child.get("id") == name: 
+                return child.get("pos")
 
-
-
+    def cleanup(self):
+        self.sumoProcess.wait()
+        
 def get_options():
     optParser = optparse.OptionParser()
     optParser.add_option("--gui", action="store_true", default=False, help="run the commandline version of sumo")
     options, args = optParser.parse_args()
     return options
-
+        
 # this is the main entry point of this script
 if __name__ == "__main__":
     options = get_options()
+    
+    norm = NormController(options)
+    norm.run()
+    norm.cleanup()
 
-    # this script has been called from the command line. It will start sumo as a
-    # server, then connect and run
-    if options.gui:
-        sumoBinary = checkBinary('sumo-gui')
-    else:
-        sumoBinary = checkBinary('sumo')
-    sumoProcess = subprocess.Popen([sumoBinary, "-n", PATH+"/"+CASENAME+".net.xml",'-r',PATH+"/"+CASENAME+".rou.xml",'-a',PATH+"/sensors.xml", "--remote-port", str(PORT)], stdout=DEVNULL#stdout=sys.stdout,
-    ,stderr=sys.stderr)
-    init()
-    run()
-    sumoProcess.wait()
