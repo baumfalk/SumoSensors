@@ -27,11 +27,10 @@ def init():
 def run():
     print "starting simulation"
     step = 0
-    read_XML()
-    while step < 10:
+    while step < 1000:
         traci.simulationStep()
         laneAreaList=traci.areal.getIDList()
-        """print
+        print
         print "+---------------------------------------+"
         print "Current Step:", step
         for laneAreaID in laneAreaList:
@@ -41,30 +40,28 @@ def run():
             print "+ getLastStepMeanSpeed\t", traci.areal.getLastStepMeanSpeed(laneAreaID),"\t+"
             print "+ getLastStepOccupancy\t", traci.areal.getLastStepOccupancy(laneAreaID),"\t+"
             print "+ getLastStepVehicleIdList\t", traci.areal.getLastStepVehicleIdList(laneAreaID),"\t+"
+            
             vehicleList = traci.areal.getLastStepVehicleIdList(laneAreaID)
             if laneAreaID == "N42lane0":
                 for vehicleID in vehicleList:                  
-                    print "+ getDrivingDistance nextsensor(",vehicleID,") ", traci.vehicle.getDrivingDistance(vehicleID,"A28Tot700",20,0)
+                    print "+ getDrivingDistance nextsensor(",vehicleID,") ", traci.vehicle.getDrivingDistance(vehicleID,"A28Tot700",getSensorPos(N42lane0),0)
             elif laneAreaID == "A28lane1.0":
                 for vehicleID in vehicleList:                  
-                    print "+ getDrivingDistance nextsensor(",vehicleID,") ", traci.vehicle.getDrivingDistance(vehicleID,"A28Tot700",20,1)
+                    print "+ getDrivingDistance nextsensor(",vehicleID,") ", traci.vehicle.getDrivingDistance(vehicleID,"A28Tot700",20,0)
             
             print "---------------------------------------"
         print "+---------------------------------------+"
-        """
         step += 1
     traci.close()
 
-def read_XML():
+def getSensorPos(name):
     import xml.etree.ElementTree as ET
     tree = ET.parse(PATH+"/sensors.xml")
     root = tree.getroot()
     for child in root:
-		print child.get("pos")
-    """for child in root:
-		print child.tag
-		if child.tag == "laneAreaDetector":
-			print child.attrib"""
+		if child.get("id") == name: 
+			return child.get("pos")
+
 
 
 def get_options():

@@ -1,6 +1,6 @@
 <additional>
 	<laneAreaDetector id="A28lane1.0" lane="A28Tot350_0" pos="330" length="10" freq="25" file="A28lane1.0.txt"/>
-	<laneAreaDetector id="A28lane1.1" lane="A28Tot700_1" pos="20" length="5" freq="25" file="A28lane1.1.txt"/>
+	<!--<laneAreaDetector id="A28lane1.1" lane="A28Tot700_1" pos="20" length="5" freq="25" file="A28lane1.1.txt"/> -->
 	<laneAreaDetector id="A28lane0.1" lane="A28Tot700_0" pos="20" length="5" freq="25" file="A28lane0.1.txt"/>
 	<laneAreaDetector id="N42lane0," lane="N42_0" pos="200" length="10" freq="25" file="N42lane0.txt"/>
 </additional>
