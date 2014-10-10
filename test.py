@@ -32,7 +32,7 @@ class NormController:
         # 1. there are five or more cars waiting on the sensor -> switch priority
         # 2. there are four or less cars, but at least one waiting on the sensor -> sensor triggered
         if len(vehicleList) >= 5:
-            self.state = "switchPriority"
+            self.returnToSwitchPriority()
         elif len(vehicleList) > 0:
             self.state = "sensorTriggered"
             self.vehicleWaitingTime = 0.0
@@ -45,26 +45,35 @@ class NormController:
         if self.waitingVehicleID == vehicleList[0]:
             self.vehicleWaitingTime += traci.simulation.getDeltaT()
             if self.vehicleWaitingTime >= 60:
-                self.state = "switchPriority"
+                self.returnToSwitchPriority()
         else:        
             self.returnToNormal()
             
     def handleSwitchPriority(self):
         print "handleSwitchPriority"
-        if self.state == "switchPriority":
-            if SWITCH_TIME == 10:
+        self.switch_time += traci.simulation.getDeltaT()
+
+        if self.switch_time >= 10:
                 self.returnToNormal()
-        SWITCH_TIME += 1
         self.stoppedVehicleList = traci.areal.getLastStepVehicleIdList("A28_350_lane0_0")
-        for self.vehicleID in self.stppedVehicleList:
-            traci.vehicle.setSpeed(self.vehicleID,0)
+        for vehicleID in self.stoppedVehicleList:
+            traci.vehicle.setSpeed(vehicleID,0)
+    
+    def returnToSwitchPriority(self):
+        self.state="switchPriority"
+        self.switch_time = 0.0
     
     def returnToNormal(self):
         self.state = "normal"
         self.vehicleWaitingTime = 0.0
+        self.switch_time = 0.0
         self.waitingVehicleID = None
-
-    
+        if len(self.stoppedVehicleList) > 0:          
+            for vehicleID in self.stoppedVehicleList:
+                maxLaneSpeed = traci.lane.getMaxSpeed(traci.vehicle.getLaneID(vehicleID))
+                traci.vehicle.setSpeed(vehicleID,maxLaneSpeed)
+            self.stoppedVehicleList = []
+   
     switch = {"normal" : handleNormal,
                 "sensorTriggered" : handleSensorTriggered,
                 "switchPriority" : handleSwitchPriority,
@@ -88,7 +97,7 @@ class NormController:
         traci.init(self.PORT)
         print "Connection made with sumo"
         self.laneAreaList = traci.areal.getIDList()
-   
+        self.stoppedVehicleList = []
     
     def run(self):
         print "starting simulation for",self.rounds,"rounds"
