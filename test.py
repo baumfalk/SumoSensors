@@ -48,7 +48,7 @@ class NormController:
             self.returnToNormal()
         elif self.waitingVehicleID == vehicleList[0]:
             self.vehicleWaitingTime += traci.simulation.getDeltaT()
-            if self.vehicleWaitingTime >= 10000:
+            if self.vehicleWaitingTime >= 40000:
                 self.returnToSwitchPriority()
             
     def handleSwitchPriority(self):
